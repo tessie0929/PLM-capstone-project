@@ -1,0 +1,41 @@
+---
+title: "TCGA_SKCM"
+author: "B229565"
+date: "2026-01-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Library
+```{r}
+library(data.table)
+library(tidyverse)
+
+maf <- fread("merged.maf", sep = "\t", data.table = TRUE)
+
+```
+
+```{r}
+maf <- maf %>%
+  mutate(
+    patient = substr(Tumor_Sample_Barcode, 1, 12), # 1-12 patient ID
+    sample_type_code = substr(Tumor_Sample_Barcode, 14, 15),  # 14-15 is sample type. "01" primary, "06" metastatic
+    sample_type = case_when(
+      sample_type_code == "01" ~ "Primary",
+      sample_type_code == "06" ~ "Metastatic",
+      TRUE ~ "Other"
+    )
+  )
+genes <- c("BRAF","NRAS","NF1") #NF1 is a cancer suppressor gene, better to use non-silent mutation
+
+maf2 <- maf %>%
+  filter(
+    Hugo_Symbol %in% genes,
+    Variant_Classification == "Missense_Mutation"
+  )
+write_csv(maf2, '/Users/wuye/Desktop/Capstone project/PLM-capstone-project/SKCM.csv')
+```
+
